@@ -11,6 +11,10 @@ export class AcceptInvitationDto {
   @IsNotEmpty({ message: 'Token es requerido' })
   token: string;
 
+  @IsString()
+  @IsNotEmpty({ message: 'Access token es requerido' })
+  accessToken: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(255)

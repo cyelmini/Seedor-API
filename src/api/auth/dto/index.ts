@@ -5,3 +5,4 @@ export * from './accept-invitation.dto';
 export * from './send-otp.dto';
 export * from './verify-otp.dto';
 export * from './set-password.dto';
+export * from './validate-token.dto';

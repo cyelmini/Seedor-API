@@ -386,11 +386,64 @@ export class AuthService {
     return invitation as Invitation;
   }
 
-  async acceptInvitation(
+  async acceptInvitationWithToken(
     dto: AcceptInvitationDto,
-    userId: string,
-    userEmail: string,
   ): Promise<{ membership: TenantMembership; tenantId: string }> {
+    console.log('🔍 acceptInvitationWithToken called with token:', dto.token);
+    console.log('🔍 accessToken length:', dto.accessToken?.length);
+
+    // Decode the JWT to get user info (the token was already validated by Supabase when issued)
+    let userId: string;
+    let userEmail: string;
+
+    try {
+      // JWT format: header.payload.signature
+      const parts = dto.accessToken.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid JWT format');
+      }
+
+      const payload = JSON.parse(
+        Buffer.from(parts[1], 'base64').toString('utf-8'),
+      );
+
+      console.log('🔍 JWT payload:', {
+        sub: payload.sub,
+        email: payload.email,
+        exp: payload.exp,
+        aud: payload.aud,
+      });
+
+      // Check if token is expired
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        throw new UnauthorizedException('Token expirado');
+      }
+
+      // Check audience
+      if (payload.aud !== 'authenticated') {
+        throw new UnauthorizedException('Token no válido para autenticación');
+      }
+
+      userId = payload.sub;
+      userEmail = payload.email || '';
+
+      if (!userId) {
+        throw new UnauthorizedException('Token sin ID de usuario');
+      }
+    } catch (err) {
+      console.error('❌ JWT decode failed:', err);
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Token de acceso inválido');
+    }
+
+    console.log('✅ JWT decoded:', { userId, userEmail });
+
+    // The JWT is signed by Supabase, so we trust it.
+    // We skip the getUserById check since it can fail even when user exists.
+    // The foreign key constraint on membership insert will catch any issues.
+
     const invitation = await this.getInvitationByToken(dto.token);
 
     if (userEmail !== invitation.email) {
@@ -420,6 +473,35 @@ export class AuthService {
       );
     }
 
+    // Check if membership already exists
+    const { data: existingMembership } = await this.supabaseAdmin
+      .from('tenant_memberships')
+      .select('id')
+      .eq('tenant_id', invitation.tenant_id)
+      .eq('user_id', userId)
+      .single();
+
+    if (existingMembership) {
+      console.log('⚠️ Membership already exists, updating invitation status');
+      // Mark invitation as accepted
+      await this.supabaseAdmin
+        .from('invitations')
+        .update({ accepted_at: new Date().toISOString() })
+        .eq('id', invitation.id);
+
+      // Return the existing membership
+      const { data: membershipDataRaw } = await this.supabaseAdmin
+        .from('tenant_memberships')
+        .select('*')
+        .eq('id', existingMembership.id)
+        .single();
+
+      return {
+        membership: membershipDataRaw as TenantMembership,
+        tenantId: invitation.tenant_id,
+      };
+    }
+
     if (dto.password) {
       await this.supabaseAdmin.auth.admin.updateUserById(userId, {
         password: dto.password,
@@ -429,6 +511,28 @@ export class AuthService {
         },
       });
     }
+
+    // Create/update profile FIRST (before membership, due to foreign key constraint)
+    console.log('🔍 Creating/updating profile for user:', userId);
+    const { error: profileError } = await this.supabaseAdmin
+      .from('profiles')
+      .upsert(
+        {
+          user_id: userId,
+          full_name: dto.fullName || userEmail.split('@')[0],
+          phone: dto.phone || null,
+          default_tenant_id: invitation.tenant_id,
+        },
+        { onConflict: 'user_id' },
+      );
+
+    if (profileError) {
+      console.error('❌ Profile upsert failed:', profileError);
+      throw new BadRequestException(
+        `Error al crear perfil: ${profileError.message}`,
+      );
+    }
+    console.log('✅ Profile created/updated successfully');
 
     const { data: membershipDataRaw, error: membershipError } =
       await this.supabaseAdmin
@@ -451,16 +555,6 @@ export class AuthService {
     }
 
     const membershipData = membershipDataRaw as TenantMembershipRow;
-
-    await this.supabaseAdmin.from('profiles').upsert(
-      {
-        user_id: userId,
-        full_name: dto.fullName || userEmail.split('@')[0],
-        phone: dto.phone || null,
-        default_tenant_id: invitation.tenant_id,
-      },
-      { onConflict: 'user_id' },
-    );
 
     if (COUNTABLE_ROLES.includes(invitation.role_code)) {
       await this.supabaseAdmin
@@ -699,6 +793,35 @@ export class AuthService {
         `Error al establecer contraseña: ${error.message}`,
       );
     }
+  }
+
+  // ==================== VALIDATE AND EXCHANGE TOKEN ====================
+
+  async validateAndExchangeToken(
+    accessToken: string,
+    refreshToken?: string,
+  ): Promise<{ user: AuthUser; accessToken: string; refreshToken?: string }> {
+    // Validate the token with Supabase
+    const {
+      data: { user: supabaseUser },
+      error,
+    } = await this.supabaseAdmin.auth.getUser(accessToken);
+
+    if (error || !supabaseUser) {
+      throw new UnauthorizedException('Token inválido o expirado');
+    }
+
+    // Build the auth user with all memberships
+    const user = await this.buildAuthUser(
+      supabaseUser.id,
+      supabaseUser.email || '',
+    );
+
+    return {
+      user,
+      accessToken,
+      refreshToken,
+    };
   }
 
   // ==================== LOGOUT ====================

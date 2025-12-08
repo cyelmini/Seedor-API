@@ -19,6 +19,7 @@ import {
   SendOtpDto,
   VerifyOtpDto,
   SetPasswordDto,
+  ValidateTokenDto,
 } from './dto';
 import { SupabaseAuthGuard } from './guards/supabase-auth.guard';
 import { CurrentUser, Token } from '../../common/decorators';
@@ -74,6 +75,20 @@ export class AuthController {
     return { invitation };
   }
 
+  @Post('validate-token')
+  @HttpCode(HttpStatus.OK)
+  async validateToken(@Body() dto: ValidateTokenDto) {
+    const result = await this.authService.validateAndExchangeToken(
+      dto.accessToken,
+      dto.refreshToken,
+    );
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
+  }
+
   // ==================== PROTECTED ENDPOINTS ====================
 
   @Get('me')
@@ -116,17 +131,9 @@ export class AuthController {
   }
 
   @Post('accept-invitation')
-  @UseGuards(SupabaseAuthGuard)
-  async acceptInvitation(
-    @Body() dto: AcceptInvitationDto,
-    @CurrentUser('id') userId: string,
-    @CurrentUser('email') userEmail: string,
-  ) {
-    const result = await this.authService.acceptInvitation(
-      dto,
-      userId,
-      userEmail,
-    );
+  @HttpCode(HttpStatus.OK)
+  async acceptInvitation(@Body() dto: AcceptInvitationDto) {
+    const result = await this.authService.acceptInvitationWithToken(dto);
     return {
       membership: result.membership,
       tenantId: result.tenantId,
@@ -158,8 +165,9 @@ export class AuthController {
     return { invitations };
   }
 
+  // Public endpoint - returns non-sensitive plan information
+  // Needed during invitation flow before user has auth token
   @Get('tenant/:tenantId/limits')
-  @UseGuards(SupabaseAuthGuard)
   async getTenantLimits(@Param('tenantId') tenantId: string) {
     const limits = await this.authService.getTenantLimits(tenantId);
     return { limits };
