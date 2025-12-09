@@ -10,6 +10,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { WorkersService } from './workers.service';
 import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
 import {
@@ -21,6 +22,8 @@ import {
   GetAttendanceQueryDto,
 } from './dto';
 
+@ApiTags('Workers')
+@ApiBearerAuth('bearer')
 @Controller('workers')
 export class WorkersController {
   constructor(private readonly workersService: WorkersService) {}

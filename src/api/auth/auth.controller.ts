@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthUser } from './types/database.types';
 import {
@@ -24,6 +25,7 @@ import {
 import { SupabaseAuthGuard } from './guards/supabase-auth.guard';
 import { CurrentUser, Token } from '../../common/decorators';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -32,6 +34,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Iniciar sesión con email y contraseña' })
   async login(@Body() dto: LoginDto) {
     const result = await this.authService.login(dto);
     return {
@@ -42,6 +45,7 @@ export class AuthController {
 
   @Post('send-otp')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Enviar código OTP al email' })
   async sendOtp(@Body() dto: SendOtpDto) {
     await this.authService.sendOwnerVerificationCode(dto);
     return { message: 'Código enviado al email' };
@@ -49,6 +53,7 @@ export class AuthController {
 
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verificar código OTP' })
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     const result = await this.authService.verifyOwnerCode(dto);
     return {
@@ -58,6 +63,7 @@ export class AuthController {
   }
 
   @Post('register-tenant')
+  @ApiOperation({ summary: 'Registrar nuevo tenant con owner' })
   async registerTenant(
     @Body() dto: RegisterTenantDto,
     @Body('userId') userId: string,
@@ -70,6 +76,7 @@ export class AuthController {
   }
 
   @Get('invitation/:token')
+  @ApiOperation({ summary: 'Obtener invitación por token' })
   async getInvitation(@Param('token') token: string) {
     const invitation = await this.authService.getInvitationByToken(token);
     return { invitation };
@@ -77,6 +84,7 @@ export class AuthController {
 
   @Post('validate-token')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Validar y refrescar token de acceso' })
   async validateToken(@Body() dto: ValidateTokenDto) {
     const result = await this.authService.validateAndExchangeToken(
       dto.accessToken,
@@ -93,13 +101,17 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Obtener usuario actual autenticado' })
   getMe(@CurrentUser() user: AuthUser) {
     return { user };
   }
 
   @Post('logout')
   @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth('bearer')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cerrar sesión' })
   async logout(@Token() token: string) {
     await this.authService.logout(token);
     return { message: 'Sesión cerrada' };
@@ -107,7 +119,9 @@ export class AuthController {
 
   @Post('set-password')
   @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth('bearer')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Establecer contraseña del usuario' })
   async setPassword(
     @Body() dto: SetPasswordDto,
     @CurrentUser('id') userId: string,
@@ -118,6 +132,8 @@ export class AuthController {
 
   @Post('invite')
   @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Invitar usuario a un tenant' })
   async inviteUser(
     @Body() dto: InviteUserDto,
     @CurrentUser('id') userId: string,
@@ -132,6 +148,7 @@ export class AuthController {
 
   @Post('accept-invitation')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Aceptar invitación a un tenant' })
   async acceptInvitation(@Body() dto: AcceptInvitationDto) {
     const result = await this.authService.acceptInvitationWithToken(dto);
     return {
@@ -143,7 +160,9 @@ export class AuthController {
 
   @Delete('invitation/:id')
   @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth('bearer')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Revocar invitación pendiente' })
   async revokeInvitation(
     @Param('id') invitationId: string,
     @CurrentUser('id') userId: string,
@@ -154,6 +173,8 @@ export class AuthController {
 
   @Get('tenant/:tenantId/invitations')
   @UseGuards(SupabaseAuthGuard)
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Listar invitaciones de un tenant' })
   async getTenantInvitations(
     @Param('tenantId') tenantId: string,
     @CurrentUser('id') userId: string,
@@ -165,9 +186,8 @@ export class AuthController {
     return { invitations };
   }
 
-  // Public endpoint - returns non-sensitive plan information
-  // Needed during invitation flow before user has auth token
   @Get('tenant/:tenantId/limits')
+  @ApiOperation({ summary: 'Obtener límites del plan del tenant' })
   async getTenantLimits(@Param('tenantId') tenantId: string) {
     const limits = await this.authService.getTenantLimits(tenantId);
     return { limits };

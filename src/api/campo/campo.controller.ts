@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CampoService } from './campo.service';
 import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
 import {
@@ -20,6 +21,8 @@ import {
   UpdateTaskDto,
 } from './dto';
 
+@ApiTags('Campo')
+@ApiBearerAuth('bearer')
 @Controller('campo')
 export class CampoController {
   constructor(private readonly campoService: CampoService) {}

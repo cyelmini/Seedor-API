@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { InventarioService } from './inventario.service';
 import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
 import { CreateItemDto, UpdateItemDto } from './dto/item.dto';
@@ -16,6 +17,8 @@ import { CreateCategoryDto } from './dto/category.dto';
 import { CreateLocationDto } from './dto/location.dto';
 import { CreateMovementDto } from './dto/movement.dto';
 
+@ApiTags('Inventario')
+@ApiBearerAuth('bearer')
 @Controller('inventario')
 export class InventarioController {
   constructor(private readonly inventarioService: InventarioService) {}

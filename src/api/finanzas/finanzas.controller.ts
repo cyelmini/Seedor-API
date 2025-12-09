@@ -8,10 +8,12 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { FinanzasService } from './finanzas.service';
 import { CreateMovementDto, UpdateMovementDto } from './dto/movement.dto';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 
+@ApiTags('Finanzas')
 @Controller('finanzas')
 export class FinanzasController {
   constructor(private readonly finanzasService: FinanzasService) {}

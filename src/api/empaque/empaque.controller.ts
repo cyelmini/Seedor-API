@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { EmpaqueService } from './empaque.service';
 import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
 import {
@@ -22,6 +23,8 @@ import {
   UpdateEgresoFrutaDto,
 } from './dto/egreso-fruta.dto';
 
+@ApiTags('Empaque')
+@ApiBearerAuth('bearer')
 @Controller('empaque')
 export class EmpaqueController {
   constructor(private readonly empaqueService: EmpaqueService) {}
