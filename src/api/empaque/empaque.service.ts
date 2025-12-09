@@ -35,7 +35,12 @@ export class EmpaqueService {
       throw new Error('Missing Supabase configuration');
     }
 
-    this.supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    this.supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
   }
 
   // ==================== INGRESO FRUTA ====================
@@ -338,11 +343,6 @@ export class EmpaqueService {
         kilos: dto.kilos ?? null,
         cant_cajas: dto.cantCajas ?? null,
         peso: dto.peso ?? null,
-        estado: dto.estado ?? 'armado',
-        ubicacion: dto.ubicacion ?? null,
-        temperatura: dto.temperatura ?? null,
-        vencimiento: dto.vencimiento ?? null,
-        lote_origen: dto.loteOrigen ?? null,
       })
       .select()
       .single();
@@ -371,11 +371,6 @@ export class EmpaqueService {
     if (dto.kilos !== undefined) updateData.kilos = dto.kilos;
     if (dto.cantCajas !== undefined) updateData.cant_cajas = dto.cantCajas;
     if (dto.peso !== undefined) updateData.peso = dto.peso;
-    if (dto.estado !== undefined) updateData.estado = dto.estado;
-    if (dto.ubicacion !== undefined) updateData.ubicacion = dto.ubicacion;
-    if (dto.temperatura !== undefined) updateData.temperatura = dto.temperatura;
-    if (dto.vencimiento !== undefined) updateData.vencimiento = dto.vencimiento;
-    if (dto.loteOrigen !== undefined) updateData.lote_origen = dto.loteOrigen;
 
     const { data, error } = await this.supabaseAdmin
       .from('pallets')
