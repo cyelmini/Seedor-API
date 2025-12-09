@@ -20,12 +20,7 @@ export interface WorkerRow {
 }
 
 // Attendance status codes (matching existing DB codes)
-export type AttendanceStatusCode =
-  | 'PRE'
-  | 'AUS'
-  | 'TAR'
-  | 'LIC'
-  | 'VAC';
+export type AttendanceStatusCode = 'PRE' | 'AUS' | 'TAR' | 'LIC' | 'VAC';
 
 // Attendance record from database
 export interface AttendanceRecordRow {

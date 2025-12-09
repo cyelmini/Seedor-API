@@ -61,9 +61,7 @@ export class CampoService {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      throw new BadRequestException(
-        `Error al obtener campo: ${error.message}`,
-      );
+      throw new BadRequestException(`Error al obtener campo: ${error.message}`);
     }
 
     return data;
@@ -101,7 +99,8 @@ export class CampoService {
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.location !== undefined) updateData.location = dto.location;
     if (dto.areaHa !== undefined) updateData.area_ha = dto.areaHa;
-    if (dto.defaultCrop !== undefined) updateData.default_crop = dto.defaultCrop;
+    if (dto.defaultCrop !== undefined)
+      updateData.default_crop = dto.defaultCrop;
     if (dto.notes !== undefined) updateData.notes = dto.notes;
 
     const { data, error } = await this.supabaseAdmin

@@ -1,4 +1,10 @@
-import { IsString, IsBoolean, IsArray, IsOptional, IsIn } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsArray,
+  IsOptional,
+  IsIn,
+} from 'class-validator';
 
 export const VALID_MODULES = [
   'dashboard',

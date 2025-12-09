@@ -126,10 +126,7 @@ export class TenantController {
     @Body() dto: Omit<EnableModuleDto, 'tenantId'>,
     @Request() req: { user: { id: string } },
   ) {
-    await this.tenantService.enableModule(
-      { ...dto, tenantId },
-      req.user.id,
-    );
+    await this.tenantService.enableModule({ ...dto, tenantId }, req.user.id);
     return { success: true };
   }
 

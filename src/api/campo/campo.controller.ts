@@ -146,7 +146,10 @@ export class CampoController {
 
   @UseGuards(SupabaseAuthGuard)
   @Put('tasks/:taskId')
-  async updateTask(@Param('taskId') taskId: string, @Body() dto: UpdateTaskDto) {
+  async updateTask(
+    @Param('taskId') taskId: string,
+    @Body() dto: UpdateTaskDto,
+  ) {
     const task = await this.campoService.updateTask(taskId, dto);
     return { task };
   }

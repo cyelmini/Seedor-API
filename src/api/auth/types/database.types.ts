@@ -69,8 +69,14 @@ export interface AuditLogRow {
 // Insert types (omit auto-generated fields)
 export type TenantInsert = Omit<TenantRow, 'id' | 'created_at' | 'updated_at'>;
 export type ProfileInsert = Omit<ProfileRow, 'created_at' | 'updated_at'>;
-export type TenantMembershipInsert = Omit<TenantMembershipRow, 'id' | 'created_at' | 'updated_at' | 'tenants'>;
-export type InvitationInsert = Omit<InvitationRow, 'id' | 'created_at' | 'tenants' | 'roles'>;
+export type TenantMembershipInsert = Omit<
+  TenantMembershipRow,
+  'id' | 'created_at' | 'updated_at' | 'tenants'
+>;
+export type InvitationInsert = Omit<
+  InvitationRow,
+  'id' | 'created_at' | 'tenants' | 'roles'
+>;
 export type AuditLogInsert = Omit<AuditLogRow, 'id' | 'created_at'>;
 
 // Update types

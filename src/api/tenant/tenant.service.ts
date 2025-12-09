@@ -71,7 +71,9 @@ export class TenantService {
       .maybeSingle();
 
     if (error) {
-      throw new BadRequestException(`Error al obtener tenant: ${error.message}`);
+      throw new BadRequestException(
+        `Error al obtener tenant: ${error.message}`,
+      );
     }
 
     return data as Tenant | null;
@@ -85,7 +87,9 @@ export class TenantService {
       .maybeSingle();
 
     if (error) {
-      throw new BadRequestException(`Error al obtener tenant: ${error.message}`);
+      throw new BadRequestException(
+        `Error al obtener tenant: ${error.message}`,
+      );
     }
 
     return data as Tenant | null;
@@ -338,10 +342,7 @@ export class TenantService {
     return data as Tenant;
   }
 
-  async setUserDefaultTenant(
-    userId: string,
-    tenantId: string,
-  ): Promise<void> {
+  async setUserDefaultTenant(userId: string, tenantId: string): Promise<void> {
     // Verify user has membership
     const membership = await this.getUserMembership(userId, tenantId);
     if (!membership) {

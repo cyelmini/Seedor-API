@@ -243,7 +243,7 @@ export class AuthService {
 
     return {
       tenant: tenantData,
-      membership: membershipData as TenantMembership,
+      membership: membershipData,
     };
   }
 
@@ -383,7 +383,7 @@ export class AuthService {
       throw new BadRequestException('La invitación ha expirado');
     }
 
-    return invitation as Invitation;
+    return invitation;
   }
 
   async acceptInvitationWithToken(
@@ -581,7 +581,7 @@ export class AuthService {
     });
 
     return {
-      membership: membershipData as TenantMembership,
+      membership: membershipData,
       tenantId: invitation.tenant_id,
     };
   }
